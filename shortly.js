@@ -11,15 +11,24 @@ var Click = require('./app/models/click');
 
 var app = express();
 
+
+
 app.configure(function() {
   app.set('views', __dirname + '/views');
   app.set('view engine', 'ejs');
   app.use(partials());
   app.use(express.bodyParser())
+  // app.use(express.cookieSession());  //imports from V3
+  app.use(express.cookieParser('secret')); //imports from V3
+  app.use(express.session()); //imports from V3
   app.use(express.static(__dirname + '/public'));
 });
 
 app.get('/', function(req, res) {
+  res.render('login');
+});
+
+app.get('/restricted', function(req, res) {
   res.render('index');
 });
 
@@ -30,7 +39,22 @@ app.get('/create', function(req, res) {
 app.get('/links', function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
-  })
+  });
+});
+
+app.post('/login', function(req, res) {
+
+  var username = req.body.username;
+  var password = req.body.password;
+
+  if(username === 'demo' && password === 'demo'){
+    req.session.regenerate(function() {
+      req.session.user = username;
+      res.redirect('/restricted');
+    });
+  }else {
+    res.redirect('/login');
+  }
 });
 
 app.post('/links', function(req, res) {
