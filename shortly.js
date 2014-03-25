@@ -55,7 +55,11 @@ app.post('/login', function(req, res) {
   new User({ username: username }).fetch().then(function(model) {
     if (model) {
       var sysPassword = model.attributes.password;
-      console.log("SYS PW ",sysPassword);
+      console.log(sysPassword, " ", password);
+      if(sysPassword === password) {
+        console.log("MATCH!!");
+        res.redirect('/restricted');
+      }
     } else {
       console.log("REDIRECT");
       res.redirect('/login');
