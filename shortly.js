@@ -1,6 +1,7 @@
 var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
+var knex = require('knex');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -28,6 +29,10 @@ app.get('/', function(req, res) {
   res.render('login');
 });
 
+app.get('/signup', function(req, res) {
+  res.render('signup');
+});
+
 app.get('/restricted', function(req, res) {
   res.render('index');
 });
@@ -47,14 +52,53 @@ app.post('/login', function(req, res) {
   var username = req.body.username;
   var password = req.body.password;
 
-  if(username === 'demo' && password === 'demo'){
-    req.session.regenerate(function() {
-      req.session.user = username;
-      res.redirect('/restricted');
-    });
-  }else {
-    res.redirect('/login');
-  }
+  new User({ username: username }).fetch().then(function(model) {
+    if (model) {
+      var sysPassword = model.attributes.password;
+      console.log("SYS PW ",sysPassword);
+    } else {
+      console.log("REDIRECT");
+      res.redirect('/login');
+    }
+  });
+
+  // if(username === 'demo' && password === 'demo'){
+  //   req.session.regenerate(function() {
+  //     req.session.user = username;
+  //     res.redirect('/restricted');
+  //   });
+  // }else {
+  //   res.redirect('/login');
+  // }
+});
+
+app.post('/signup', function(req, res) {
+
+  var username = req.body.username;
+  var password = req.body.password;
+
+  // db.knex('users').insert({username: username, password: password});
+
+  new User({ username: username }).fetch().then(function(found) {
+    if (found) {
+      console.log("FOUND USER", found);
+      // res.send(200, found.attributes);
+    } else {
+      var user = new User({
+        username: username,
+        password: password
+      });
+
+      user.save().then(function(newLink) {
+        Users.add(newLink);
+        res.send(201, newLink);
+      });
+    }
+  });
+
+  // var userDump = db.knex('users').select().then(function(data) {
+  //   console.log(data);
+  // });
 });
 
 app.post('/links', function(req, res) {
