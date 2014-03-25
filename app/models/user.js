@@ -9,16 +9,17 @@ var User = db.Model.extend({
 
   links: function() {
     return this.hasMany(Link);
-  },
-
-  initialize: function() {
-    this.on('creating', function(model, attrs, options) {
-      var userPassword = model.get('password');
-      bcrypt.hash(userPassword, null, null, function(err, hash){
-        model.set('password', hash);
-      });
-    });
   }
+
+  // initialize: function() {
+  //   this.on('creating', function(model, attrs, options) {
+  //     var userPassword = model.get('password');
+  //     bcrypt.hash(userPassword, null, null, function(err, hash){
+  //       model.set('password', hash);
+  //       console.log("CONSTRUCTOR PW: ", model.get('password'));
+  //     });
+  //   });
+  // }
 });
 
 module.exports = User; // must be last

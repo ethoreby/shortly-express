@@ -2,7 +2,7 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var knex = require('knex');
-
+var bcrypt = require('bcrypt-nodejs');
 var db = require('./app/config');
 var Users = require('./app/collections/users');
 var User = require('./app/models/user');
@@ -55,25 +55,22 @@ app.post('/login', function(req, res) {
   new User({ username: username }).fetch().then(function(model) {
     if (model) {
       var sysPassword = model.attributes.password;
+
       console.log(sysPassword, " ", password);
-      if(sysPassword === password) {
-        console.log("MATCH!!");
-        res.redirect('/restricted');
-      }
+
+      bcrypt.compare(password, sysPassword, function(err, match) {
+        if(match) {
+          res.redirect('/restricted');
+        } else {
+          console.log("REDIRECT ", err);
+          res.redirect('/login');
+        }
+      });
     } else {
       console.log("REDIRECT");
       res.redirect('/login');
     }
   });
-
-  // if(username === 'demo' && password === 'demo'){
-  //   req.session.regenerate(function() {
-  //     req.session.user = username;
-  //     res.redirect('/restricted');
-  //   });
-  // }else {
-  //   res.redirect('/login');
-  // }
 });
 
 app.post('/signup', function(req, res) {
@@ -88,14 +85,18 @@ app.post('/signup', function(req, res) {
       console.log("FOUND USER", found);
       // res.send(200, found.attributes);
     } else {
-      var user = new User({
-        username: username,
-        password: password
-      });
 
-      user.save().then(function(newLink) {
-        Users.add(newLink);
-        res.send(201, newLink);
+      bcrypt.hash(password, null, null, function(err, hash){
+        var user = new User({
+          username: username,
+          password: hash
+        });
+
+        user.save().then(function(newUser) {
+          Users.add(newUser);
+          res.redirect('/restricted');
+          // res.send(201, newUser);
+        });
       });
     }
   });
