@@ -34,16 +34,22 @@ app.get('/signup', function(req, res) {
 });
 
 app.get('/restricted', function(req, res) {
-  res.render('index');
+  verifySession(req, res, function(){
+    res.render('index');
+  });
 });
 
 app.get('/create', function(req, res) {
-  res.render('index');
+  verifySession(req, res, function(){
+    res.render('index');
+  });
 });
 
 app.get('/links', function(req, res) {
-  Links.reset().fetch().then(function(links) {
-    res.send(200, links.models);
+  verifySession(req, res, function(){
+    Links.reset().fetch().then(function(links) {
+      res.send(200, links.models);
+    });
   });
 });
 
@@ -60,7 +66,8 @@ app.post('/login', function(req, res) {
 
       bcrypt.compare(password, sysPassword, function(err, match) {
         if(match) {
-          res.redirect('/restricted');
+          // res.redirect('/restricted');
+          openSession(req, res, username);
         } else {
           console.log("REDIRECT ", err);
           res.redirect('/login');
@@ -70,6 +77,12 @@ app.post('/login', function(req, res) {
       console.log("REDIRECT");
       res.redirect('/login');
     }
+  });
+});
+
+app.post('/logout', function(req, res) {
+  req.session.destroy(function() {
+    res.redirect('/login');
   });
 });
 
@@ -94,17 +107,33 @@ app.post('/signup', function(req, res) {
 
         user.save().then(function(newUser) {
           Users.add(newUser);
-          res.redirect('/restricted');
+          openSession(req, res, username);
+          // res.redirect('/restricted');
           // res.send(201, newUser);
         });
       });
     }
   });
-
-  // var userDump = db.knex('users').select().then(function(data) {
-  //   console.log(data);
-  // });
 });
+
+var openSession = function(req, res, username) {
+  req.session.regenerate(function(){
+    req.session.user = username;
+    res.redirect('/restricted');
+  });
+};
+
+
+// ALEX:
+var verifySession = function(req, res, cb) {
+  console.log('req.session.user: ', req.session.user);
+  if(!req.session.user){
+    res.redirect('/');
+  } else {
+    cb();
+  }
+};
+// ALEX ^
 
 app.post('/links', function(req, res) {
   var uri = req.body.url;
