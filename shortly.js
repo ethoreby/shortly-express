@@ -53,6 +53,12 @@ app.get('/links', function(req, res) {
   });
 });
 
+app.get('/logout', function(req, res) {
+  req.session.destroy(function() {
+    res.redirect('/');
+  });
+});
+
 app.post('/login', function(req, res) {
 
   var username = req.body.username;
@@ -77,12 +83,6 @@ app.post('/login', function(req, res) {
       console.log("REDIRECT");
       res.redirect('/login');
     }
-  });
-});
-
-app.post('/logout', function(req, res) {
-  req.session.destroy(function() {
-    res.redirect('/login');
   });
 });
 
